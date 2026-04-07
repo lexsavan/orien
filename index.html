@@ -746,119 +746,109 @@ function routeAI(text){
 }
 
 // ── CALL EACH AI ──
-async function callClaude(messages, system){
-  var key = AI_KEYS.claude || localStorage.getItem('orien_key');
-  if(!key) throw new Error('NoClaudeKey');
-  var r = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':key,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
+
+// ════ EDGE FUNCTION PROXY (Keys ຢູ່ Server) ════
+var EDGE_URL = 'https://warqhojjwwmsitfsmcwf.supabase.co/functions/v1/quick-function';
+var SUPABASE_URL = 'https://warqhojjwwmsitfsmcwf.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndhcnFob2pqd3dtc2l0ZnNtY3dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NDE5ODksImV4cCI6MjA5MTExNzk4OX0.TbAT6WJL-K4YE5UC93cJwJrftU3aF5FFtDLopDbn5OM';
+
+// ── ດຶງ Auth Token (ຈາກ localStorage ຫຼື session) ──
+function getAuthToken(){
+  return localStorage.getItem('orien_auth_token') || '';
+}
+
+// ── Call Edge Function ──
+async function callEdgeFunction(provider, messages, system, mode){
+  var token = getAuthToken();
+  var headers = {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON_KEY
+  };
+  if(token) headers['Authorization'] = 'Bearer ' + token;
+
+  var res = await fetch(EDGE_URL, {
+    method: 'POST',
+    headers: headers,
     body: JSON.stringify({
-      model:'claude-sonnet-4-20250514',
-      max_tokens:8000,
-      stream:true,
-      system:system,
-      messages:messages
+      provider: provider,
+      messages: messages,
+      system: system || '',
+      mode: mode || 'n',
+      max_tokens: 8000
     })
   });
-  if(!r.ok){
-    var err = await r.json();
-    throw new Error(err.error?err.error.message:'API error '+r.status);
+
+  var data = await res.json();
+  if(!res.ok) throw new Error(data.error || 'Edge Function error: ' + res.status);
+  return data.result;
+}
+
+// ── Individual AI callers — ໃຊ້ Edge Function ──
+async function callClaude(messages, system){
+  // ຖ້າຍັງມີ Claude key ໃນ localStorage ໃຊ້ direct ກ່ອນ (backward compat)
+  var key = AI_KEYS.claude || localStorage.getItem('orien_key');
+  if(key && key !== 'ໃສ່ClaudeKeyໄວ້'){
+    var r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:8000, stream:true, system:system, messages:messages})
+    });
+    if(!r.ok){var err=await r.json();throw new Error(err.error?err.error.message:'API error '+r.status);}
+    var reader=r.body.getReader();var decoder=new TextDecoder();var fullText='';
+    var streamRow=document.createElement('div');streamRow.className='msg ai';streamRow.id='stream-row';
+    var streamBody=document.createElement('div');streamBody.className='msg-body';
+    streamBody.innerHTML='<div class="msg-name">Orien</div>';
+    var streamBub=document.createElement('div');streamBub.className='bubble';streamBub.style.whiteSpace='pre-wrap';streamBub.style.lineHeight='1.75';
+    streamBody.appendChild(streamBub);
+    streamRow.innerHTML='<div class="avatar ai" style="background:linear-gradient(135deg,#f5c842,#c96b00);color:#fff;font-family:Georgia,serif;font-weight:700;font-size:16px;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">O</div>';
+    streamRow.appendChild(streamBody);
+    document.getElementById('cc').appendChild(streamRow);scrollBot();
+    while(true){var res=await reader.read();if(res.done)break;var chunk=decoder.decode(res.value,{stream:true});var lines=chunk.split('\n');
+      for(var i=0;i<lines.length;i++){var line=lines[i].trim();if(!line.startsWith('data:'))continue;var data=line.slice(5).trim();if(data==='[DONE]')break;
+        try{var obj=JSON.parse(data);if(obj.type==='content_block_delta'&&obj.delta&&obj.delta.text){fullText+=obj.delta.text;streamBub.textContent=fullText;scrollBot();}}catch(e){}}}
+    var sr=document.getElementById('stream-row');if(sr)sr.remove();
+    return fullText;
   }
-  // ── Streaming: ສະແດງ token ທີລະໂຕ ──
-  var reader = r.body.getReader();
-  var decoder = new TextDecoder();
-  var fullText = '';
-  var streamBub = null;
-
-  // ສ້າງ bubble streaming
-  rmTyping();
-  var streamRow = document.createElement('div');
-  streamRow.className = 'msg ai';
-  streamRow.id = 'stream-row';
-  var streamBody = document.createElement('div');
-  streamBody.className = 'msg-body';
-  streamBody.innerHTML = '<div class="msg-name">Orien</div>';
-  streamBub = document.createElement('div');
-  streamBub.className = 'bubble';
-  streamBub.style.whiteSpace = 'pre-wrap';
-  streamBub.style.lineHeight = '1.75';
-  streamBody.appendChild(streamBub);
-  streamRow.innerHTML = '<div class="avatar ai" style="background:linear-gradient(135deg,#f5c842,#c96b00);color:#fff;font-family:Georgia,serif;font-weight:700;font-size:16px;border-radius:8px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">O</div>';
-  streamRow.appendChild(streamBody);
-  document.getElementById('cc').appendChild(streamRow);
-  scrollBot();
-
-  while(true){
-    var res = await reader.read();
-    if(res.done) break;
-    var chunk = decoder.decode(res.value, {stream:true});
-    var lines = chunk.split('\n');
-    for(var i=0;i<lines.length;i++){
-      var line = lines[i].trim();
-      if(!line.startsWith('data:')) continue;
-      var data = line.slice(5).trim();
-      if(data==='[DONE]') break;
-      try{
-        var obj = JSON.parse(data);
-        if(obj.type==='content_block_delta'&&obj.delta&&obj.delta.text){
-          fullText += obj.delta.text;
-          streamBub.textContent = fullText;
-          scrollBot();
-        }
-      }catch(e){}
-    }
-  }
-
-  // ລຶບ stream bubble ແລ້ວ render ໃໝ່ດ້ວຍ markdown
-  var sr = document.getElementById('stream-row');
-  if(sr) sr.remove();
-  return fullText;
+  // ຖ້າບໍ່ມີ Key — ໃຊ້ Edge Function
+  return await callEdgeFunction('claude', messages, system, window._currentMode||'n');
 }
 
 async function callOpenAI(messages, system){
-  if(!AI_KEYS.openai) throw new Error('NoOpenAIKey');
-  var msgs = [{role:'system',content:system}].concat(messages);
-  var r = await fetch('https://api.openai.com/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_KEYS.openai},
-    body: JSON.stringify({model:'gpt-4o', max_tokens:4000, messages:msgs})
-  });
-  var d = await r.json();
-  if(d.error) throw new Error(d.error.message);
-  return d.choices[0].message.content;
+  if(AI_KEYS.openai && AI_KEYS.openai.startsWith('sk-')){
+    var msgs=[{role:'system',content:system}].concat(messages);
+    var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_KEYS.openai},body:JSON.stringify({model:'gpt-4o',max_tokens:8000,messages:msgs})});
+    var d=await r.json();if(d.error)throw new Error(d.error.message);
+    return d.choices[0].message.content;
+  }
+  return await callEdgeFunction('openai', messages, system, window._currentMode||'n');
 }
 
 async function callGemini(messages, system){
-  if(!AI_KEYS.gemini) throw new Error('NoGeminiKey');
-  var txt = system+'\n\n';
-  messages.forEach(function(m){ txt += (m.role==='user'?'User: ':'Assistant: ')+m.content+'\n'; });
-  var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key='+AI_KEYS.gemini,{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({contents:[{parts:[{text:txt}]}],generationConfig:{maxOutputTokens:4000}})
-  });
-  var d = await r.json();
-  if(d.error) throw new Error(d.error.message);
-  return d.candidates[0].content.parts[0].text;
+  if(AI_KEYS.gemini && AI_KEYS.gemini.startsWith('AIza')){
+    var txt=system+'\n\n';messages.forEach(function(m){txt+=(m.role==='user'?'User: ':'Assistant: ')+m.content+'\n';});
+    var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key='+AI_KEYS.gemini,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:txt}]}],generationConfig:{maxOutputTokens:8000}})});
+    var d=await r.json();if(d.error)throw new Error(d.error.message);
+    return d.candidates[0].content.parts[0].text;
+  }
+  return await callEdgeFunction('gemini', messages, system, window._currentMode||'n');
 }
 
 async function callGroq(messages, system){
-  if(!AI_KEYS.groq) throw new Error('NoGroqKey');
-  var msgs = [{role:'system',content:system}].concat(messages);
-  var r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_KEYS.groq},
-    body: JSON.stringify({model:'llama-3.3-70b-versatile', max_tokens:4000, messages:msgs})
-  });
-  var d = await r.json();
-  if(d.error) throw new Error(JSON.stringify(d.error));
-  return d.choices[0].message.content;
+  if(AI_KEYS.groq && AI_KEYS.groq.startsWith('gsk_')){
+    var msgs=[{role:'system',content:system}].concat(messages);
+    var r=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AI_KEYS.groq},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:4000,messages:msgs})});
+    var d=await r.json();if(d.error)throw new Error(JSON.stringify(d.error));
+    return d.choices[0].message.content;
+  }
+  return await callEdgeFunction('groq', messages, system, window._currentMode||'n');
 }
+
+
+
+
+
+
+
 
 // ── MAIN: Auto Route + Fallback ──
 async function callMultiAI(messages, system, userText){
@@ -1195,6 +1185,7 @@ async function autoDebug(code,btn){
 // UI UTILS
 function setMode(m){
   modeKey=m;
+  window._currentMode=m;
   document.querySelectorAll('.mode').forEach(function(t){t.classList.remove('on');});
   document.getElementById('mt-'+m).classList.add('on');
 }
