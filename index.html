@@ -261,14 +261,14 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--tx);display:
 #mt-file.on{background:#d1fae5;color:#065f46;border-color:#6ee7b7}
 #mt-sec,#mt-chart,#mt-file{font-size:11px}
 
-.suggestions{width:100%;max-width:700px;padding:0 20px;margin-top:24px}
-.sug-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:600px){.sug-grid{grid-template-columns:repeat(2,1fr)}}
-.sug-card{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 14px;background:var(--bg);border:0.5px solid var(--bd);border-radius:12px;cursor:pointer;text-align:left;transition:all .15s;color:var(--tx)}
-.sug-card:hover{background:var(--s2);border-color:var(--ac);transform:translateY(-1px)}
-.sug-icon{font-size:20px;margin-bottom:3px}
-.sug-title{font-size:13px;font-weight:600;color:var(--tx)}
-.sug-desc{font-size:11px;color:var(--t3);line-height:1.4}
+
+
+@media(max-width:600px){}
+
+
+
+
+
 #mt-msg.on{background:#f5f3ff;color:#6d28d9;border-color:#c4b5fd}
 #mt-recipe.on{background:#fff7ed;color:#9a3412;border-color:#fdba74}
 #mt-aiapp.on{background:#ecfdf5;color:#065f46;border-color:#6ee7b7}
@@ -290,6 +290,13 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--tx);display:
 
 #mt-build.on{background:#fdf4ff;color:#7e22ce;border-color:#d8b4fe}
 #mt-build{font-size:11px}
+
+.voice-btn{color:var(--t2);transition:all .2s}
+.voice-btn:hover{color:var(--ac);background:var(--acb)}
+.voice-btn.listening{color:#ef4444;background:#fee2e2;animation:pulse-mic .8s ease-in-out infinite}
+@keyframes pulse-mic{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.voice-status{font-size:11px;color:#ef4444;text-align:center;padding:4px 0;display:none}
+.voice-status.show{display:block}
 </style>
 </head>
 <body>
@@ -522,55 +529,7 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--tx);display:
         <h1>ສະບາຍດີ, ຂ້ອຍຊື່ Orien</h1>
         <p>ເປັນຜູ້ຊ່ວຍ AI ສ່ວນຕົວສຳລັບທ່ານ</p>
       </div>
-      <div class="suggestions">
-        <div class="sug-grid">
-          <button class="sug-card" onclick="sp('ສ້າງ landing page ສວຍງາມ ພ້ອມ animation')">
-            <span class="sug-icon">🌐</span>
-            <span class="sug-title">ສ້າງ Web App</span>
-            <span class="sug-desc">Landing page, Dashboard, E-commerce</span>
-          </button>
-          <button class="sug-card" onclick="setMode('aiapp');sp('ສ້າງ AI chatbot app ສວຍ ໃຊ້ Claude API')">
-            <span class="sug-icon">🤖</span>
-            <span class="sug-title">AI App Builder</span>
-            <span class="sug-desc">ສ້າງ app ທີ່ມີ AI ຢູ່ຂ້າງໃນ</span>
-          </button>
-          <button class="sug-card" onclick="setMode('sec');sp('ຊ່ວຍວິເຄາະ security ຂອງ app ຂ້ອຍ')">
-            <span class="sug-icon">🛡</span>
-            <span class="sug-title">Cybersecurity</span>
-            <span class="sug-desc">Pentest, vulnerability analysis</span>
-          </button>
-          <button class="sug-card" onclick="setMode('chart');sp('ສ້າງ dashboard chart ສວຍ ມີ animation')">
-            <span class="sug-icon">📊</span>
-            <span class="sug-title">Chart & Diagram</span>
-            <span class="sug-desc">Bar, Line, Flowchart, ER Diagram</span>
-          </button>
-          <button class="sug-card" onclick="setMode('file');sp('ສ້າງ Word document report professional')">
-            <span class="sug-icon">📁</span>
-            <span class="sug-title">ສ້າງໄຟລ໌</span>
-            <span class="sug-desc">Word, Excel, PowerPoint, PDF</span>
-          </button>
-          <button class="sug-card" onclick="setMode('msg');sp('ຮ່າງ email professional ຫາ client')">
-            <span class="sug-icon">✉️</span>
-            <span class="sug-title">ຮ່າງຂໍ້ຄວາມ</span>
-            <span class="sug-desc">Email, Slack, SMS professional</span>
-          </button>
-          <button class="sug-card" onclick="setMode('recipe');sp('ສູດ ຂາໝູຕົ້ມ ພ້ອມ interactive serving')">
-            <span class="sug-icon">🍳</span>
-            <span class="sug-title">ສູດອາຫານ</span>
-            <span class="sug-desc">Interactive recipe ປ່ຽນ serving ໄດ້</span>
-          </button>
-          <button class="sug-card" onclick="sp('ຄົ້ນຫາຂ່າວ tech ລ່າສຸດ ວັນນີ້')">
-            <span class="sug-icon">🌐</span>
-            <span class="sug-title">ຄົ້ນຫາ Web</span>
-            <span class="sug-desc">ຂໍ້ມູນ real-time ລ່າສຸດ</span>
-          </button>
-          <button class="sug-card" onclick="setMode('build');sp('ສ້າງ SaaS dashboard app React + TypeScript + Tailwind ສວຍ')">
-            <span class="sug-icon">🏗</span>
-            <span class="sug-title">App Builder</span>
-            <span class="sug-desc">SaaS, Dashboard, Landing page</span>
-          </button>
-        </div>
-      </div>
+      
     </div>
   </div>
 
@@ -595,34 +554,17 @@ body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--tx);display:
         </div>
         <div class="ibox-foot">
           <div class="itools">
-            <button class="itool" onclick="clickUpload()" title="ຄັດຕິດໄຟລ໌ (ລວມ PDF)">📎</button>
-            <button class="itool" onclick="sp('สร้าง React component')" title="React">⚛️</button>
-            <button class="itool" onclick="sp('debug ໂຄດนี้')" title="Debug">🐛</button>
-            <button class="itool" onclick="sp('สร้าง infographic')" title="ວິຊວນ">🎨</button>
-            <button class="itool" onclick="sp('ช่วย deploy เว็บขึ้น Vercel')" title="Deploy">🚀</button>
-          <button class="tool" onclick="setMode('sec');sp('ຊ່ວຍວິເຄາະ security ຂອງ app ຂ້ອຍ')" title="Pentest">🛡</button>
-          <button class="tool" onclick="setMode('chart');sp('ສ້າງ chart ສວຍງາມ ພ້ອມ sample data')" title="Chart">📊</button>
-          <button class="tool" onclick="setMode('file');sp('ສ້າງ Word document professional')" title="ສ້າງໄຟລ໌">📁</button>
-          </div>
-          <div class="ifoot-right">
-            <div class="modes">
-              <div class="mode on" id="mt-n" onclick="setMode('n')">ທົ່ວໄປ</div>
-              <div class="mode" id="mt-c" onclick="setMode('c')">ໂຄດ</div>
-              <div class="mode" id="mt-d" onclick="setMode('d')">ເອກະສານ</div>
-              <div class="mode" id="mt-v" onclick="setMode('v')">ວິຊວນ</div>
-              <div class="mode" id="mt-sec" onclick="setMode('sec')">🛡 Cyber</div>
-              <div class="mode" id="mt-chart" onclick="setMode('chart')">📊 Chart</div>
-              <div class="mode" id="mt-file" onclick="setMode('file')">📁 ໄຟລ໌</div>
-              <div class="mode" id="mt-msg" onclick="setMode('msg')">✉️ ຂໍ້ຄວາມ</div>
-              <div class="mode" id="mt-recipe" onclick="setMode('recipe')">🍳 ສູດ</div>
-              <div class="mode" id="mt-aiapp" onclick="setMode('aiapp')">🤖 AI App</div>
-              <div class="mode" id="mt-build" onclick="setMode('build')">🏗 Builder</div>
-            </div>
+            <button class="itool" onclick="clickUpload()" title="ຄັດຕິດໄຟລ໌">📎</button>
+            <button class="itool voice-btn" id="voice-btn" onclick="toggleVoice()" title="ເວົ້າລົມກັບ Orien">
+              <svg id="voice-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
       <input type="file" id="fi" multiple accept="*/*" onchange="handleFiles(this.files)"/>
-      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--t3)">Enter ສົ່ງ · Shift+Enter ຂຶ້ນແຖວໃໝ່ · ລາກໄຟລ໌ວາງທີ່ນີ້ ຫຼື Ctrl+V</div>
+      <div id="voice-status" class="voice-status"></div>
     </div>
   </div>
 </div>
